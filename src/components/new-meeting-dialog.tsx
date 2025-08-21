@@ -11,9 +11,8 @@ import { Label } from "@/components/ui/label";
 import { HardDriveUpload, Mic, Loader2, StopCircle, PauseCircle, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
-import { transcribeAudio } from "@/ai/flows/transcribe-audio";
 
-export default function NewMeetingDialog({ children }: { children: ReactNode }) {
+export default function NewMeetingDialog({ children, onMeetingCreated }: { children: ReactNode, onMeetingCreated: (meeting: any) => void }) {
   const [open, setOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -29,6 +28,9 @@ export default function NewMeetingDialog({ children }: { children: ReactNode }) 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  
+  const [title, setTitle] = useState("");
+
 
   useEffect(() => {
     // Clean up on component unmount
@@ -138,17 +140,33 @@ export default function NewMeetingDialog({ children }: { children: ReactNode }) 
     setIsProcessing(true);
 
     try {
-      // For demo purposes, we navigate immediately and process in the background.
-      // In a real app, you might await transcription here or use a different pattern.
       const newMeetingId = Date.now().toString();
-      // Store the audio data URI to be used on the meeting page.
-      // This is a workaround for passing large data. A real app would upload to a server/storage.
-      sessionStorage.setItem(`meeting_audio_${newMeetingId}`, audioDataUri);
+      const meetingDate = new Date().toISOString();
+      const meetingTitle = title || `Meeting ${newMeetingId}`;
+
+      const newMeeting = {
+        id: newMeetingId,
+        title: meetingTitle,
+        date: meetingDate,
+        audioDataUri: audioDataUri,
+        duration: formatTime(recordingTime)
+      };
+
+      sessionStorage.setItem(`meeting_details_${newMeetingId}`, JSON.stringify(newMeeting));
+      
+      onMeetingCreated(newMeeting);
       
       router.push(`/meeting/${newMeetingId}`);
       setOpen(false);
+      // Reset state
+      setTitle("");
+      setAudioFile(null);
+      setAudioBlob(null);
+      setFileName("");
+      setRecordingTime(0);
+
     } catch(error) {
-      console.error("Transcription error:", error);
+      console.error("Processing error:", error);
       alert(t('transcription_error'));
     } finally {
       setIsProcessing(false);
@@ -163,6 +181,15 @@ export default function NewMeetingDialog({ children }: { children: ReactNode }) 
           <DialogTitle className="text-2xl font-bold">{t('start_new_meeting')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
+           <div className="space-y-2 mb-4">
+              <Label htmlFor="meeting-title">Meeting Title</Label>
+              <Input 
+                id="meeting-title" 
+                placeholder="E.g., Q3 Project Kick-off" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+              />
+            </div>
           <Tabs defaultValue="upload" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="upload">{t('upload')}</TabsTrigger>

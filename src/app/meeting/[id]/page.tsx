@@ -33,8 +33,10 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
   const { t } = useLanguage();
 
-  const [audioUrl, setAudioUrl] = useState<string>(""); // Default to empty
+  const [audioUrl, setAudioUrl] = useState<string>("");
   const [transcript, setTranscript] = useState<string>("");
+  const [meetingTitle, setMeetingTitle] = useState("Meeting");
+  const [meetingDate, setMeetingDate] = useState("");
   
   // Raw AI results
   const [rawDiarization, setRawDiarization] = useState<DiarizeAudioOutput | null>(null);
@@ -161,12 +163,17 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
 
   useEffect(() => {
-    const audioDataUri = sessionStorage.getItem(`meeting_audio_${resolvedParams.id}`);
-    if (audioDataUri) {
-      processAudio(audioDataUri);
+    const meetingDetailsStr = sessionStorage.getItem(`meeting_details_${resolvedParams.id}`);
+    if (meetingDetailsStr) {
+        const details = JSON.parse(meetingDetailsStr);
+        setMeetingTitle(details.title);
+        setMeetingDate(new Date(details.date).toLocaleString());
+        processAudio(details.audioDataUri);
     } else {
       // Fallback to mock data if no audio is in session storage
       setAudioUrl("https://storage.googleapis.com/genkit-public/sociology-lecture.mp3");
+      setMeetingTitle("Project Phoenix - Q3 Planning");
+      setMeetingDate(new Date('2023-08-15T00:00:00').toLocaleString());
       setTranscript(mockTranscript);
       runAiFlows(mockTranscript);
     }
@@ -175,9 +182,6 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   if (isPending && !rawDiarization) {
     return <Loading />;
   }
-
-  const meetingTitle = "Project Phoenix - Q3 Planning";
-  const meetingDate = "August 15, 2023";
 
   return (
     <div className="container mx-auto max-w-7xl p-4 md:p-8">
@@ -214,5 +218,3 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
-    

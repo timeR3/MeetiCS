@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState, useEffect } from "react";
 import { PlusCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +11,7 @@ import { Header } from "@/components/header";
 import { MeetingCard } from "@/components/meeting-card";
 import { useLanguage } from "@/context/language-context";
 
-const meetings = [
+const initialMeetings = [
   {
     id: '1',
     title: 'Project Phoenix - Q3 Planning',
@@ -42,6 +44,24 @@ const meetings = [
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const [meetings, setMeetings] = useState(initialMeetings);
+
+  const handleMeetingCreated = (newMeeting: any) => {
+    // A more robust solution would involve proper state management (e.g., Context, Redux)
+    // and persisting this to a backend. For now, we update local state.
+    setMeetings(prevMeetings => [
+        {
+          id: newMeeting.id,
+          title: newMeeting.title,
+          date: newMeeting.date.split('T')[0], // Extract just the date part
+          participants: 0, // We don't know participants yet
+          duration: newMeeting.duration,
+        },
+        ...prevMeetings
+    ]);
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -56,7 +76,7 @@ export default function Dashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input placeholder={t('search_meetings')} className="pl-10" />
               </div>
-              <NewMeetingDialog>
+              <NewMeetingDialog onMeetingCreated={handleMeetingCreated}>
                 <Button className="w-full md:w-auto" variant="default">
                   <PlusCircle className="mr-2 h-5 w-5" />
                   {t('new_meeting')}
@@ -71,7 +91,7 @@ export default function Dashboard() {
             ))}
              <Card className="flex items-center justify-center border-dashed border-2 hover:border-primary transition-colors duration-200 group">
                 <CardContent className="p-6 text-center">
-                    <NewMeetingDialog>
+                    <NewMeetingDialog onMeetingCreated={handleMeetingCreated}>
                         <Button variant="ghost" className="h-auto p-4 flex flex-col gap-2">
                             <PlusCircle className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
                             <span className="text-sm font-medium">{t('new_meeting')}</span>
