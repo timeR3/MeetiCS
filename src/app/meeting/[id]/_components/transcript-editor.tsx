@@ -8,6 +8,7 @@ import { Bot, Edit, Save, Music4 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/context/language-context";
 
 interface TranscriptEditorProps {
     initialTranscript: string;
@@ -36,21 +37,22 @@ const parseTranscript = (transcript: string) => {
 export default function TranscriptEditor({ initialTranscript, audioUrl }: TranscriptEditorProps) {
     const [transcript, setTranscript] = useState(initialTranscript);
     const [isEditing, setIsEditing] = useState(false);
+    const { t } = useLanguage();
     
     const parsedTranscript = parseTranscript(transcript);
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center"><Music4 className="mr-2 h-5 w-5" /> Transcript</CardTitle>
+                <CardTitle className="flex items-center"><Music4 className="mr-2 h-5 w-5" /> {t('transcript')}</CardTitle>
                 <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
                     {isEditing ? (
                         <>
-                            <Save className="mr-2 h-4 w-4" /> Save
+                            <Save className="mr-2 h-4 w-4" /> {t('save')}
                         </>
                     ) : (
                         <>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
+                            <Edit className="mr-2 h-4 w-4" /> {t('edit')}
                         </>
                     )}
                 </Button>
@@ -89,7 +91,7 @@ export default function TranscriptEditor({ initialTranscript, audioUrl }: Transc
                 )}
                  <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
                     <Bot className="h-4 w-4" />
-                    <span>AI-generated transcript. You can edit it for accuracy.</span>
+                    <span>{t('ai_generated_transcript')}</span>
                 </div>
             </CardContent>
         </Card>

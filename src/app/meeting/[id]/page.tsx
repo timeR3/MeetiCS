@@ -15,6 +15,7 @@ import { diarizeAudio } from "@/ai/flows/diarize-audio";
 import { summarizeMeeting } from "@/ai/flows/summarize-meeting";
 import { extractActionItems } from "@/ai/flows/extract-action-items";
 import Loading from "./loading";
+import { useLanguage } from "@/context/language-context";
 
 const mockTranscript = `Alice: Okay team, let's kick off the Q3 planning for Project Phoenix. Bob, can you start with the latest user feedback? Bob: Sure Alice. We've seen a 20% increase in feature requests for a mobile app. Users are loving the web version but want portability. Alice: Interesting. That aligns with our long-term goals. What are the key themes from the requests? Bob: Mainly offline access and push notifications. Charlie, you were looking into the technical feasibility of this, right? Charlie: Yes, I've done a preliminary analysis. A native app would be a significant undertaking, but a PWA could be a good first step. It would give us offline capabilities quickly. Alice: I like that idea. Let's create an action item for Charlie to scope out the PWA implementation plan. We'll need a full proposal by the end of the month. Bob, please also put together a report on the most requested mobile features. We'll review both in two weeks.`;
 
@@ -25,6 +26,7 @@ const knownSpeakers = [
 
 export default function MeetingPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
+  const { t } = useLanguage();
   const [diarization, setDiarization] = useState<DiarizeAudioOutput | null>(null);
   const [summary, setSummary] = useState<SummarizeMeetingOutput | null>(null);
   const [actionItems, setActionItems] = useState<ExtractActionItemsOutput | null>(null);
@@ -62,7 +64,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
         <Button asChild variant="ghost" className="mb-4 -ml-4">
           <Link href="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Meetings
+            {t('back_to_meetings')}
           </Link>
         </Button>
         <h1 className="text-3xl md:text-4xl font-bold">{meetingTitle}</h1>

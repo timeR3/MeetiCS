@@ -1,19 +1,23 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { ExtractActionItemsOutput } from "@/ai/flows/extract-action-items";
 import { Bot, CheckSquare, Mail, User } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface ActionItemsProps {
     items: ExtractActionItemsOutput | null;
 }
 
 export default function ActionItems({ items }: ActionItemsProps) {
+    const { t } = useLanguage();
     if (!items || items.length === 0) return null;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Action Items</CardTitle>
+                <CardTitle>{t('action_items')}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -26,11 +30,11 @@ export default function ActionItems({ items }: ActionItemsProps) {
                             <div className="flex items-center justify-between text-sm pl-6">
                                 <p className="text-muted-foreground flex items-center">
                                     <User className="h-4 w-4 mr-2" />
-                                    Assigned to: {item.speaker}
+                                    {t('assigned_to')}: {item.speaker}
                                 </p>
                                 <Button variant="ghost" size="sm">
                                     <Mail className="h-4 w-4 mr-2" />
-                                    Email
+                                    {t('email')}
                                 </Button>
                             </div>
                         </div>
@@ -38,7 +42,7 @@ export default function ActionItems({ items }: ActionItemsProps) {
                 </div>
                 <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
                     <Bot className="h-4 w-4" />
-                    <span>AI-extracted action items.</span>
+                    <span>{t('ai_extracted_action_items')}</span>
                 </div>
             </CardContent>
         </Card>

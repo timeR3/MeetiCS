@@ -1,7 +1,10 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { SummarizeMeetingOutput } from "@/ai/flows/summarize-meeting";
 import { Bot } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface SummaryViewProps {
     summary: SummarizeMeetingOutput | null;
@@ -14,19 +17,20 @@ const formatList = (text: string) => {
 };
 
 export default function SummaryView({ summary }: SummaryViewProps) {
+    const { t } = useLanguage();
     if (!summary) return null;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>AI Summary</CardTitle>
+                <CardTitle>{t('ai_summary')}</CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-muted-foreground mb-4">{summary.summary}</p>
                 
                 <Accordion type="single" collapsible className="w-full" defaultValue="discussion">
                     <AccordionItem value="discussion">
-                        <AccordionTrigger>Key Discussion Points</AccordionTrigger>
+                        <AccordionTrigger>{t('key_discussion_points')}</AccordionTrigger>
                         <AccordionContent className="prose prose-sm max-w-none text-muted-foreground">
                             <ul className="list-disc pl-5 space-y-1">
                                 {formatList(summary.keyDiscussionPoints)}
@@ -34,7 +38,7 @@ export default function SummaryView({ summary }: SummaryViewProps) {
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="decisions">
-                        <AccordionTrigger>Decisions Made</AccordionTrigger>
+                        <AccordionTrigger>{t('decisions_made')}</AccordionTrigger>
                         <AccordionContent className="prose prose-sm max-w-none text-muted-foreground">
                            <ul className="list-disc pl-5 space-y-1">
                                 {formatList(summary.decisionsMade)}
@@ -44,7 +48,7 @@ export default function SummaryView({ summary }: SummaryViewProps) {
                 </Accordion>
                 <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
                     <Bot className="h-4 w-4" />
-                    <span>AI-generated summary.</span>
+                    <span>{t('ai_generated_summary')}</span>
                 </div>
             </CardContent>
         </Card>

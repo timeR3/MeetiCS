@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Save, Users, Bot } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface ParticipantManagerProps {
     transcript: string;
@@ -20,6 +21,7 @@ const getInitials = (name: string) => {
 }
 
 export default function ParticipantManager({ transcript }: ParticipantManagerProps) {
+    const { t } = useLanguage();
     const speakers = useMemo(() => {
         const speakerSet = new Set<string>();
         transcript.split('\n').forEach(line => {
@@ -42,7 +44,7 @@ export default function ParticipantManager({ transcript }: ParticipantManagerPro
     const handleSave = () => {
         // In a real app, you'd save this to a database
         console.log("Saving participant names:", participantNames);
-        alert("Participant names saved (check console)!");
+        alert(t('participant_names_saved'));
     };
 
     if (speakers.length === 0) return null;
@@ -50,10 +52,10 @@ export default function ParticipantManager({ transcript }: ParticipantManagerPro
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> Participants</CardTitle>
+                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> {t('participants')}</CardTitle>
                 <Button variant="ghost" size="sm" onClick={handleSave}>
                     <Save className="mr-2 h-4 w-4" />
-                    Save Names
+                    {t('save_names')}
                 </Button>
             </CardHeader>
             <CardContent>
@@ -67,7 +69,7 @@ export default function ParticipantManager({ transcript }: ParticipantManagerPro
                                 <p className="text-sm font-medium text-primary">{speaker}</p>
                                 <Input
                                     type="text"
-                                    placeholder="Enter participant's name"
+                                    placeholder={t('enter_participant_name')}
                                     value={participantNames[speaker] || ""}
                                     onChange={(e) => handleNameChange(speaker, e.target.value)}
                                     className="h-8 mt-1"
@@ -78,7 +80,7 @@ export default function ParticipantManager({ transcript }: ParticipantManagerPro
                 </div>
                  <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
                     <Bot className="h-4 w-4" />
-                    <span>Assign names to speakers for better identification.</span>
+                    <span>{t('assign_names_to_speakers')}</span>
                 </div>
             </CardContent>
         </Card>
