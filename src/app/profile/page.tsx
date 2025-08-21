@@ -117,50 +117,49 @@ export default function ProfilePage() {
                                    />
                                 </CardContent>
                             </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Change Password</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="current-password">Current Password</Label>
-                                        <Input id="current-password" type="password" disabled={isAdminView} placeholder="••••••••" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="new-password">New Password</Label>
-                                        <Input id="new-password" type="password" placeholder="••••••••" />
-                                    </div>
-                                     <div className="space-y-2">
-                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                        <Input id="confirm-password" type="password" placeholder="••••••••" />
-                                    </div>
-                                    <Button className="w-full">Update Password</Button>
-                                </CardContent>
-                            </Card>
                         </div>
                         <div className="space-y-6 sticky top-24">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Account Details</CardTitle>
+                                    <CardTitle>Account Settings</CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex flex-col items-center space-y-4">
-                                        <Avatar className="h-24 w-24">
-                                            <AvatarImage src={selectedUser.avatarUrl} alt={selectedUser.name} />
-                                            <AvatarFallback>{selectedUser.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <Button variant="outline" size="sm">Change Photo</Button>
+                                <CardContent className="space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col items-center space-y-4">
+                                            <Avatar className="h-24 w-24">
+                                                <AvatarImage src={selectedUser.avatarUrl} alt={selectedUser.name} />
+                                                <AvatarFallback>{selectedUser.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <Button variant="outline" size="sm">Change Photo</Button>
+                                        </div>
+                                        <Separator />
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name">Name</Label>
+                                            <Input id="name" defaultValue={selectedUser.name} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input id="email" type="email" defaultValue={selectedUser.email} disabled={isAdminView} />
+                                        </div>
+                                        <Button className="w-full">Save Changes</Button>
                                     </div>
                                     <Separator />
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Name</Label>
-                                        <Input id="name" defaultValue={selectedUser.name} />
+                                     <div className="space-y-4">
+                                        <h3 className="text-lg font-medium">Change Password</h3>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="current-password">Current Password</Label>
+                                            <Input id="current-password" type="password" disabled={isAdminView} placeholder="••••••••" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="new-password">New Password</Label>
+                                            <Input id="new-password" type="password" placeholder="••••••••" />
+                                        </div>
+                                         <div className="space-y-2">
+                                            <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                            <Input id="confirm-password" type="password" placeholder="••••••••" />
+                                        </div>
+                                        <Button className="w-full">Update Password</Button>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input id="email" type="email" defaultValue={selectedUser.email} disabled={isAdminView} />
-                                    </div>
-                                    <Button className="w-full">Save Changes</Button>
                                 </CardContent>
                             </Card>
                         </div>
