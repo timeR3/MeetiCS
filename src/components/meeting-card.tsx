@@ -13,10 +13,12 @@ interface Meeting {
 }
 
 export function MeetingCard({ meeting }: { meeting: Meeting }) {
-    const formattedDate = new Date(meeting.date).toLocaleDateString('en-US', {
+    // Adding 'T00:00:00' ensures the date is parsed in UTC, avoiding timezone issues.
+    const formattedDate = new Date(meeting.date + 'T00:00:00').toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'UTC',
     });
 
   return (
