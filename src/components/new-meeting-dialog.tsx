@@ -30,9 +30,25 @@ export default function NewMeetingDialog({ children, onMeetingCreated }: { child
   const chunksRef = useRef<Blob[]>([]);
   
   const [title, setTitle] = useState("");
+  const [meetingDate, setMeetingDate] = useState<Date | null>(null);
 
 
   useEffect(() => {
+    if (open) {
+      // Set the meeting date only when the dialog is opened
+      setMeetingDate(new Date());
+    } else {
+      // Reset state when dialog closes
+      setTitle("");
+      setAudioFile(null);
+      setAudioBlob(null);
+      setFileName("");
+      setRecordingTime(0);
+      setIsRecording(false);
+      setIsPaused(false);
+      setIsProcessing(false);
+    }
+
     // Clean up on component unmount
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -40,7 +56,7 @@ export default function NewMeetingDialog({ children, onMeetingCreated }: { child
         mediaRecorderRef.current.stop();
       }
     };
-  }, []);
+  }, [open]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -141,13 +157,12 @@ export default function NewMeetingDialog({ children, onMeetingCreated }: { child
 
     try {
       const newMeetingId = Date.now().toString();
-      const meetingDate = new Date().toISOString();
       const meetingTitle = title || `Meeting ${newMeetingId}`;
 
       const newMeeting = {
         id: newMeetingId,
         title: meetingTitle,
-        date: meetingDate,
+        date: meetingDate?.toISOString(),
         audioDataUri: audioDataUri,
         duration: formatTime(recordingTime)
       };
@@ -157,13 +172,7 @@ export default function NewMeetingDialog({ children, onMeetingCreated }: { child
       onMeetingCreated(newMeeting);
       
       router.push(`/meeting/${newMeetingId}`);
-      setOpen(false);
-      // Reset state
-      setTitle("");
-      setAudioFile(null);
-      setAudioBlob(null);
-      setFileName("");
-      setRecordingTime(0);
+      setOpen(false); // This will trigger the useEffect cleanup and state reset
 
     } catch(error) {
       console.error("Processing error:", error);

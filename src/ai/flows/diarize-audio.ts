@@ -38,7 +38,7 @@ const prompt = ai.definePrompt({
   name: 'diarizeAudioPrompt',
   input: {schema: DiarizeAudioInputSchema},
   output: {schema: DiarizeAudioOutputSchema},
-  prompt: `You are an AI expert in diarizing meeting transcripts.  Given the following transcript, analyze the text and attempt to automatically detect and tag different speakers in the transcript.
+  prompt: `You are an AI expert in diarizing meeting transcripts. Your task is to analyze the text and accurately tag different speakers. Be conservative in identifying new speakers; only create a new speaker if you are confident it's a different person.
 
 {{#if knownSpeakers}}
 You have been provided with a list of known speakers. Where possible, use these names instead of generic labels like "Speaker 1".
@@ -47,10 +47,10 @@ Known Speakers:
 - {{this.name}}
 {{/each}}
 {{else}}
-Use generic labels like "Speaker 1:", "Speaker 2:", etc. Use as many speakers as needed to properly diarize the transcript.
+Use generic labels like "Speaker 1:", "Speaker 2:", etc. Use as few speakers as necessary to properly diarize the transcript. If the speaker is unclear or seems to be the same person, use the most likely existing speaker tag.
 {{/if}}
 
-If a speaker changes mid-sentence, create a new speaker tag on the new line.  Return the diarized transcript.
+If a speaker changes mid-sentence, create a new speaker tag on the new line. Return the diarized transcript.
 
 Transcript: {{{transcript}}}`,
 });
