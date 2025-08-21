@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users } from "lucide-react";
+import { Shield, Users, User, Mic } from "lucide-react";
 import UserTable from "./_components/user-table";
 import type { User } from "./_components/user-table";
 
@@ -75,7 +75,7 @@ export default function ProfilePage() {
         <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-1 p-4 md:p-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-6xl mx-auto">
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                             {isAdminView ? "Manage User Profiles" : "My Profile"}
@@ -97,33 +97,13 @@ export default function ProfilePage() {
                         </div>
                     )}
 
-                    <div className="grid md:grid-cols-3 gap-8 items-start">
-                        <div className="md:col-span-2 space-y-8">
-                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Voice Profile</CardTitle>
-                                    <CardDescription>
-                                        {isAdminView
-                                            ? "Manage this user's voice profile for automatic speaker identification."
-                                            : "Manage your voice profile for automatic speaker identification."
-                                        }
-                                    </CardDescription>
+                     <Card>
+                        <div className="grid md:grid-cols-5">
+                            <div className="md:col-span-2 p-6 border-r">
+                                <CardHeader className="p-0 mb-6">
+                                    <CardTitle className="flex items-center"><User className="mr-2 h-5 w-5"/> Account Settings</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                   <VoiceProfileRecorder 
-                                     key={selectedUser.id}
-                                     onSave={handleProfileSave}
-                                     initialAudioUrl={selectedUser.voiceProfileUrl}
-                                   />
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="space-y-6 sticky top-24">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Account Settings</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
+                                <CardContent className="p-0 space-y-6">
                                     <div className="space-y-4">
                                         <div className="flex flex-col items-center space-y-4">
                                             <Avatar className="h-24 w-24">
@@ -141,7 +121,7 @@ export default function ProfilePage() {
                                             <Label htmlFor="email">Email</Label>
                                             <Input id="email" type="email" defaultValue={selectedUser.email} disabled={isAdminView} />
                                         </div>
-                                        <Button className="w-full">Save Changes</Button>
+                                        <Button className="w-full">Save Account Info</Button>
                                     </div>
                                     <Separator />
                                      <div className="space-y-4">
@@ -161,9 +141,27 @@ export default function ProfilePage() {
                                         <Button className="w-full">Update Password</Button>
                                     </div>
                                 </CardContent>
-                            </Card>
+                            </div>
+                            <div className="md:col-span-3 p-6">
+                                 <CardHeader className="p-0 mb-6">
+                                    <CardTitle className="flex items-center"><Mic className="mr-2 h-5 w-5"/>Voice Profile</CardTitle>
+                                    <CardDescription>
+                                        {isAdminView
+                                            ? "Manage this user's voice profile for automatic speaker identification."
+                                            : "Manage your voice profile for automatic speaker identification."
+                                        }
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                   <VoiceProfileRecorder 
+                                     key={selectedUser.id}
+                                     onSave={handleProfileSave}
+                                     initialAudioUrl={selectedUser.voiceProfileUrl}
+                                   />
+                                </CardContent>
+                            </div>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             </main>
         </div>
