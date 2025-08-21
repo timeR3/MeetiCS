@@ -18,6 +18,7 @@ import Loading from "./loading";
 const mockTranscript = `Alice: Okay team, let's kick off the Q3 planning for Project Phoenix. Bob, can you start with the latest user feedback? Bob: Sure Alice. We've seen a 20% increase in feature requests for a mobile app. Users are loving the web version but want portability. Alice: Interesting. That aligns with our long-term goals. What are the key themes from the requests? Bob: Mainly offline access and push notifications. Charlie, you were looking into the technical feasibility of this, right? Charlie: Yes, I've done a preliminary analysis. A native app would be a significant undertaking, but a PWA could be a good first step. It would give us offline capabilities quickly. Alice: I like that idea. Let's create an action item for Charlie to scope out the PWA implementation plan. We'll need a full proposal by the end of the month. Bob, please also put together a report on the most requested mobile features. We'll review both in two weeks.`;
 
 export default function MeetingPage({ params }: { params: { id: string } }) {
+  const resolvedParams = use(params);
   const [diarization, setDiarization] = useState<DiarizeAudioOutput | null>(null);
   const [summary, setSummary] = useState<SummarizeMeetingOutput | null>(null);
   const [actionItems, setActionItems] = useState<ExtractActionItemsOutput | null>(null);
@@ -39,7 +40,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       setSummary(summaryResult);
       setActionItems(actionItemsResult);
     });
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   if (isPending) {
     return <Loading />;
