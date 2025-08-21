@@ -15,6 +15,11 @@ const DiarizeAudioInputSchema = z.object({
   transcript: z
     .string()
     .describe('The transcript of the meeting audio to diarize.'),
+  knownSpeakers: z.array(z.object({
+    id: z.string().describe("A unique identifier for the speaker."),
+    name: z.string().describe("The name of the speaker."),
+    voice_profile_url: z.string().optional().describe("A URL to a voice sample for the speaker.")
+  })).optional().describe("An optional list of known speakers to help with identification.")
 });
 export type DiarizeAudioInput = z.infer<typeof DiarizeAudioInputSchema>;
 
@@ -33,7 +38,19 @@ const prompt = ai.definePrompt({
   name: 'diarizeAudioPrompt',
   input: {schema: DiarizeAudioInputSchema},
   output: {schema: DiarizeAudioOutputSchema},
-  prompt: `You are an AI expert in diarizing meeting transcripts.  Given the following transcript, analyze the text and attempt to automatically detect and tag different speakers in the transcript, using "Speaker 1:", "Speaker 2:", etc. Use as many speakers as needed to properly diarize the transcript.  If a speaker changes mid-sentence, create a new speaker tag on the new line.  Return the diarized transcript.
+  prompt: `You are an AI expert in diarizing meeting transcripts.  Given the following transcript, analyze the text and attempt to automatically detect and tag different speakers in the transcript.
+
+{{#if knownSpeakers}}
+You have been provided with a list of known speakers. Where possible, use these names instead of generic labels like "Speaker 1".
+Known Speakers:
+{{#each knownSpeakers}}
+- {{this.name}}
+{{/each}}
+{{else}}
+Use generic labels like "Speaker 1:", "Speaker 2:", etc. Use as many speakers as needed to properly diarize the transcript.
+{{/if}}
+
+If a speaker changes mid-sentence, create a new speaker tag on the new line.  Return the diarized transcript.
 
 Transcript: {{{transcript}}}`,
 });
