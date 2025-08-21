@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, use } from "react";
+import { useEffect, useState, useTransition, use, useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,18 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   const [summary, setSummary] = useState<SummarizeMeetingOutput | null>(null);
   const [actionItems, setActionItems] = useState<ExtractActionItemsOutput | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const speakers = useMemo(() => {
+    if (!diarization?.diarizedTranscript) return [];
+    const speakerSet = new Set<string>();
+    diarization.diarizedTranscript.split('\n').forEach(line => {
+        const match = line.match(/^(.*?):/);
+        if (match && match[1]) {
+            speakerSet.add(match[1].trim());
+        }
+    });
+    return Array.from(speakerSet);
+  }, [diarization?.diarizedTranscript]);
 
   useEffect(() => {
     startTransition(async () => {
@@ -80,8 +92,8 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
           <SummaryView summary={summary} />
         </div>
         <div className="md:col-span-1 space-y-6 sticky top-24">
-          <ParticipantManager transcript={diarization?.diarizedTranscript || ''} />
-          <ActionItems items={actionItems} />
+          <ParticipantManager speakers={speakers} />
+          <ActionItems items={actionItems} participants={speakers} />
         </div>
       </div>
     </div>

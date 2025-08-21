@@ -8,12 +8,14 @@ import { Bot, CheckSquare, Mail, User, Edit, Save, Trash2, PlusCircle } from "lu
 import { useLanguage } from "@/context/language-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ActionItemsProps {
     items: ExtractActionItemsOutput | null;
+    participants: string[];
 }
 
-export default function ActionItems({ items: initialItems }: ActionItemsProps) {
+export default function ActionItems({ items: initialItems, participants }: ActionItemsProps) {
     const { t } = useLanguage();
     const [isEditing, setIsEditing] = useState(false);
     const [editedItems, setEditedItems] = useState<ExtractActionItemsOutput>(initialItems || []);
@@ -86,13 +88,19 @@ export default function ActionItems({ items: initialItems }: ActionItemsProps) {
                                 </div>
                                 <div>
                                     <Label htmlFor={`speaker-${index}`} className="text-sm font-medium">{t('assigned_to')}</Label>
-                                    <Input
-                                        id={`speaker-${index}`}
+                                    <Select
                                         value={item.speaker}
-                                        onChange={(e) => handleItemChange(index, 'speaker', e.target.value)}
-                                        placeholder={t('enter_speaker_name')}
-                                        className="mt-1 h-8"
-                                    />
+                                        onValueChange={(value) => handleItemChange(index, 'speaker', value)}
+                                    >
+                                        <SelectTrigger id={`speaker-${index}`} className="mt-1 h-8">
+                                            <SelectValue placeholder={t('enter_speaker_name')} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {participants.map((p) => (
+                                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         ))}

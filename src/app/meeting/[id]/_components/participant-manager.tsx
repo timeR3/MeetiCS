@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Save, Users, Bot } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 
 interface ParticipantManagerProps {
-    transcript: string;
+    speakers: string[];
 }
 
 const getInitials = (name: string) => {
@@ -20,19 +20,8 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 }
 
-export default function ParticipantManager({ transcript }: ParticipantManagerProps) {
+export default function ParticipantManager({ speakers }: ParticipantManagerProps) {
     const { t } = useLanguage();
-    const speakers = useMemo(() => {
-        const speakerSet = new Set<string>();
-        transcript.split('\n').forEach(line => {
-            const match = line.match(/^(.*?):/);
-            if (match && match[1]) {
-                speakerSet.add(match[1].trim());
-            }
-        });
-        return Array.from(speakerSet);
-    }, [transcript]);
-
     const [participantNames, setParticipantNames] = useState<Record<string, string>>(
         speakers.reduce((acc, speaker) => ({ ...acc, [speaker]: "" }), {})
     );
