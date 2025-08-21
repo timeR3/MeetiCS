@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -42,9 +42,9 @@ export default function TranscriptEditor({ transcript: initialTranscript, audioU
     const { t } = useLanguage();
     
     // Update internal state if the prop changes (e.g., from parent)
-    useState(() => {
+    useEffect(() => {
         setTranscript(initialTranscript);
-    });
+    }, [initialTranscript]);
 
     const parsedTranscript = parseTranscript(transcript);
 
