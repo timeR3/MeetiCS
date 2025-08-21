@@ -12,10 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Shield, Users } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UserTable from "./_components/user-table";
+import type { User } from "./_components/user-table";
 
 // In a real app, this data would come from an API/database.
-const loggedInUser = {
+const loggedInUser: User = {
     id: "user-1",
     name: "Alex Doe",
     email: "alex.doe@example.com",
@@ -23,7 +24,7 @@ const loggedInUser = {
     voiceProfileUrl: "" 
 };
 
-const allUsers = [
+const allUsers: User[] = [
     loggedInUser,
     {
         id: "user-2",
@@ -46,18 +47,14 @@ export default function ProfilePage() {
     const [isAdminView, setIsAdminView] = useState(false);
     const [managedUsers, setManagedUsers] = useState(allUsers);
     
-    // The user currently being displayed/managed.
-    // Defaults to the logged-in user. In admin mode, this can be changed.
     const [selectedUser, setSelectedUser] = useState(loggedInUser);
 
     const handleProfileSave = (url: string) => {
-        // Update the profile for the selected user
         const updatedUsers = managedUsers.map(u => 
             u.id === selectedUser.id ? { ...u, voiceProfileUrl: url } : u
         );
         setManagedUsers(updatedUsers);
         
-        // If the updated user is the currently selected one, update its state too
         if (selectedUser.id === selectedUser.id) {
              setSelectedUser(prev => ({...prev!, voiceProfileUrl: url}));
         }
@@ -65,17 +62,13 @@ export default function ProfilePage() {
     
     const handleAdminViewChange = (isAdmin: boolean) => {
         setIsAdminView(isAdmin);
-        // When switching back to user view, always reset to the logged-in user.
         if (!isAdmin) {
             setSelectedUser(loggedInUser);
         }
     };
 
-    const handleUserSelect = (userId: string) => {
-        const userToManage = managedUsers.find(u => u.id === userId);
-        if (userToManage) {
-            setSelectedUser(userToManage);
-        }
+    const handleUserSelect = (user: User) => {
+        setSelectedUser(user);
     };
 
     return (
@@ -95,32 +88,13 @@ export default function ProfilePage() {
                     </div>
                     
                     {isAdminView && (
-                        <Card className="mb-8">
-                            <CardHeader>
-                                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5"/> Select User</CardTitle>
-                                <CardDescription>Choose a user to view and manage their profile.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Select onValueChange={handleUserSelect} defaultValue={selectedUser.id}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a user..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {managedUsers.map(user => (
-                                            <SelectItem key={user.id} value={user.id}>
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarImage src={user.avatarUrl} />
-                                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span>{user.name} ({user.email})</span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </CardContent>
-                        </Card>
+                        <div className="mb-8">
+                            <UserTable 
+                                users={managedUsers} 
+                                selectedUser={selectedUser} 
+                                onSelectUser={handleUserSelect} 
+                            />
+                        </div>
                     )}
 
                     <div className="grid md:grid-cols-3 gap-8 items-start">
@@ -137,7 +111,7 @@ export default function ProfilePage() {
                                 </CardHeader>
                                 <CardContent>
                                    <VoiceProfileRecorder 
-                                     key={selectedUser.id} // Re-mount component if user changes
+                                     key={selectedUser.id}
                                      onSave={handleProfileSave}
                                      initialAudioUrl={selectedUser.voiceProfileUrl}
                                    />
