@@ -23,14 +23,34 @@ export default function ProfilePage() {
                     <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
                         User Profile
                     </h1>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <div className="md:col-span-2">
+                    <div className="grid md:grid-cols-3 gap-8 items-start">
+                        <div className="md:col-span-2 space-y-8">
                              <Card>
                                 <CardHeader>
                                     <CardTitle>Voice Profile</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                    <VoiceProfileRecorder />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Change Password</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="current-password">Current Password</Label>
+                                        <Input id="current-password" type="password" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">New Password</Label>
+                                        <Input id="new-password" type="password" />
+                                    </div>
+                                     <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input id="confirm-password" type="password" />
+                                    </div>
+                                    <Button className="w-full">Update Password</Button>
                                 </CardContent>
                             </Card>
                         </div>
