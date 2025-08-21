@@ -1,40 +1,158 @@
+
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HardDriveUpload, Mic, Loader2 } from "lucide-react";
+import { HardDriveUpload, Mic, Loader2, StopCircle, PauseCircle, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
+import { transcribeAudio } from "@/ai/flows/transcribe-audio";
 
 export default function NewMeetingDialog({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const router = useRouter();
   const { t } = useLanguage();
 
+  // Recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    // Clean up on component unmount
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setFileName(event.target.files[0].name);
+    const file = event.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setAudioFile(file);
+      setAudioBlob(null); // Clear recorded blob if a file is selected
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        chunksRef.current.push(event.data);
+      };
+      
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        chunksRef.current = [];
+        stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setIsPaused(false);
+      setRecordingTime(0);
+      setAudioBlob(null);
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime(prevTime => prevTime + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert(t('mic_error'));
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+    setIsRecording(false);
+    setIsPaused(false);
+  };
+  
+  const togglePauseResume = () => {
+      if (!mediaRecorderRef.current) return;
+
+      if (isPaused) {
+          mediaRecorderRef.current.resume();
+          timerIntervalRef.current = setInterval(() => {
+              setRecordingTime(prevTime => prevTime + 1);
+          }, 1000);
+      } else {
+          mediaRecorderRef.current.pause();
+          if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      }
+      setIsPaused(!isPaused);
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let audioDataUri: string | null = null;
+    
+    if (audioBlob) {
+        audioDataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(audioBlob);
+        });
+    } else if (audioFile) {
+        audioDataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(audioFile);
+        });
+    }
+
+    if (!audioDataUri) {
+      alert(t('no_audio_error'));
+      return;
+    }
+    
     setIsProcessing(true);
-    // Simulate processing delay then navigate to meeting page
-    setTimeout(() => {
-      const newMeetingId = Date.now().toString(); // Use timestamp as a unique ID for demo
+
+    try {
+      // For demo purposes, we navigate immediately and process in the background.
+      // In a real app, you might await transcription here or use a different pattern.
+      const newMeetingId = Date.now().toString();
+      // Store the audio data URI to be used on the meeting page.
+      // This is a workaround for passing large data. A real app would upload to a server/storage.
+      sessionStorage.setItem(`meeting_audio_${newMeetingId}`, audioDataUri);
+      
       router.push(`/meeting/${newMeetingId}`);
-      setIsProcessing(false);
       setOpen(false);
-    }, 2000);
+    } catch(error) {
+      console.error("Transcription error:", error);
+      alert(t('transcription_error'));
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   return (
@@ -57,18 +175,44 @@ export default function NewMeetingDialog({ children }: { children: ReactNode }) 
                 <div className="relative border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:border-primary transition-colors">
                     <HardDriveUpload className="h-12 w-12 text-muted-foreground" />
                     <p className="mt-4 text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('drag_and_drop') }} />
-                    <Input id="audio-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} />
+                    <Input id="audio-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} accept="audio/*" />
                 </div>
                 {fileName && <p className="text-sm text-muted-foreground mt-2">{t('selected_file')}: {fileName}</p>}
               </div>
             </TabsContent>
             <TabsContent value="record" className="py-4 text-center">
               <div className="flex flex-col items-center justify-center h-40">
-                <Button type="button" size="lg" variant="destructive" className="rounded-full h-20 w-20">
-                    <Mic className="h-10 w-10" />
-                </Button>
-                <p className="mt-4 text-lg font-semibold">{t('click_to_record')}</p>
-                <p className="text-sm text-muted-foreground">{t('record_coming_soon')}</p>
+                  {!isRecording && !audioBlob && (
+                      <Button type="button" size="lg" variant="destructive" className="rounded-full h-20 w-20" onClick={startRecording}>
+                          <Mic className="h-10 w-10" />
+                      </Button>
+                  )}
+
+                  {isRecording && (
+                      <div className="flex flex-col items-center gap-4">
+                          <p className="text-3xl font-mono tabular-nums">{formatTime(recordingTime)}</p>
+                          <div className="flex gap-4">
+                              <Button type="button" size="icon" variant="secondary" onClick={togglePauseResume}>
+                                  {isPaused ? <PlayCircle className="h-6 w-6"/> : <PauseCircle className="h-6 w-6" />}
+                              </Button>
+                              <Button type="button" size="icon" variant="destructive" onClick={stopRecording}>
+                                  <StopCircle className="h-6 w-6" />
+                              </Button>
+                          </div>
+                      </div>
+                  )}
+
+                  {audioBlob && !isRecording && (
+                    <div className="flex flex-col items-center gap-2">
+                      <p>{t('recording_finished')}</p>
+                      <p className="font-semibold">{formatTime(recordingTime)}</p>
+                      <Button type="button" variant="link" onClick={startRecording}>{t('record_again')}</Button>
+                    </div>
+                  )}
+                  
+                  <p className="mt-4 text-lg font-semibold">
+                    {isRecording ? (isPaused ? t('recording_paused') : t('recording')) : t('click_to_record')}
+                  </p>
               </div>
             </TabsContent>
             <TabsContent value="connect" className="py-4">
@@ -89,7 +233,7 @@ export default function NewMeetingDialog({ children }: { children: ReactNode }) 
                 </div>
             </TabsContent>
           </Tabs>
-          <Button type="submit" className="w-full mt-4" disabled={isProcessing}>
+          <Button type="submit" className="w-full mt-4" disabled={isProcessing || (!audioFile && !audioBlob)}>
             {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

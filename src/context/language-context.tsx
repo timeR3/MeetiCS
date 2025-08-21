@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
@@ -49,7 +50,14 @@ const translations = {
         add_action_item: "Add Action Item",
         enter_action_item: "Enter action item description",
         enter_speaker_name: "Enter speaker's name",
-        retranscribe: "Retranscribe"
+        retranscribe: "Retranscribe",
+        mic_error: "Microphone access denied. Please allow microphone access in your browser settings.",
+        no_audio_error: "Please upload or record audio first.",
+        transcription_error: "An error occurred during transcription.",
+        recording_finished: "Recording finished.",
+        record_again: "Record again",
+        recording_paused: "Recording Paused",
+        recording: "Recording..."
     },
     es: {
         your_meetings: "Tus Reuniones",
@@ -95,7 +103,14 @@ const translations = {
         add_action_item: "Añadir Tarea",
         enter_action_item: "Introduce la descripción de la tarea",
         enter_speaker_name: "Introduce el nombre del responsable",
-        retranscribe: "Volver a transcribir"
+        retranscribe: "Volver a transcribir",
+        mic_error: "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono en la configuración de tu navegador.",
+        no_audio_error: "Por favor, sube o graba un audio primero.",
+        transcription_error: "Ocurrió un error durante la transcripción.",
+        recording_finished: "Grabación finalizada.",
+        record_again: "Grabar de nuevo",
+        recording_paused: "Grabación Pausada",
+        recording: "Grabando..."
     }
 }
 

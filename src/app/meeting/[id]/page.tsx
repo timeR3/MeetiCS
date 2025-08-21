@@ -17,6 +17,7 @@ import { summarizeMeeting } from "@/ai/flows/summarize-meeting";
 import { extractActionItems } from "@/ai/flows/extract-action-items";
 import Loading from "./loading";
 import { useLanguage } from "@/context/language-context";
+import { transcribeAudio } from "@/ai/flows/transcribe-audio";
 
 const mockTranscript = `Speaker 1: Okay team, let's kick off the Q3 planning for Project Phoenix. Speaker 2, can you start with the latest user feedback?
 Speaker 2: Sure Speaker 1. We've seen a 20% increase in feature requests for a mobile app. Users are loving the web version but want portability.
@@ -32,6 +33,9 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
   const { t } = useLanguage();
 
+  const [audioUrl, setAudioUrl] = useState<string>("https://storage.googleapis.com/genkit-public/sociology-lecture.mp3"); // Placeholder URL
+  const [transcript, setTranscript] = useState<string>(mockTranscript);
+  
   // Raw AI results
   const [rawDiarization, setRawDiarization] = useState<DiarizeAudioOutput | null>(null);
   const [rawSummary, setRawSummary] = useState<SummarizeMeetingOutput | null>(null);
@@ -44,23 +48,27 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   
   // Memoized initial speakers from the first diarization
   const initialSpeakers = useMemo(() => {
-    if (!rawDiarization?.diarizedTranscript) return [];
+    const textToScan = rawDiarization?.diarizedTranscript || transcript;
+    if (!textToScan) return [];
     const speakerSet = new Set<string>();
-    rawDiarization.diarizedTranscript.split('\n').forEach(line => {
+    textToScan.split('\n').forEach(line => {
       const match = line.match(/^(.*?):/);
       if (match && match[1]) {
         speakerSet.add(match[1].trim());
       }
     });
     return Array.from(speakerSet);
-  }, [rawDiarization?.diarizedTranscript]);
+  }, [rawDiarization?.diarizedTranscript, transcript]);
 
   // Update participantNames state when initialSpeakers are identified
   useEffect(() => {
     const initialMapping = initialSpeakers.reduce((acc, speaker) => {
-        acc[speaker] = speaker; // Initially, the displayed name is the speaker ID
+        // Do not overwrite existing names if they are already there
+        if (!acc[speaker]) {
+          acc[speaker] = speaker; // Initially, the displayed name is the speaker ID
+        }
         return acc;
-    }, {} as Record<string, string>);
+    }, {...participantNames} as Record<string, string>);
     setParticipantNames(initialMapping);
   }, [initialSpeakers]);
 
@@ -86,11 +94,11 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
   // Memoized derived state for UI components
   const displayDiarization = useMemo(() => {
-    if (!rawDiarization) return null;
+    const diarizedTranscript = rawDiarization?.diarizedTranscript || transcript;
     return {
-      diarizedTranscript: replaceSpeakerNames(rawDiarization.diarizedTranscript)
+      diarizedTranscript: replaceSpeakerNames(diarizedTranscript)
     };
-  }, [rawDiarization, replaceSpeakerNames]);
+  }, [rawDiarization, transcript, replaceSpeakerNames]);
 
   const displaySummary = useMemo(() => {
     if (!rawSummary) return null;
@@ -106,17 +114,17 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     if (!rawActionItems) return null;
     return rawActionItems.map(item => ({
       ...item,
-      speaker: replaceSpeakerNames(item.speaker)
+      speaker: participantNames[item.speaker] || item.speaker,
     }));
-  }, [rawActionItems, replaceSpeakerNames]);
+  }, [rawActionItems, participantNames]);
+  
+  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== ""), [participantNames]);
 
-  const displayParticipants = useMemo(() => Object.values(participantNames), [participantNames]);
-
-  const runAiFlows = useCallback(() => {
+  const runAiFlows = useCallback((textToProcess: string) => {
     startTransition(async () => {
-      const diarizationPromise = diarizeAudio({ transcript: mockTranscript, knownSpeakers });
-      const summaryPromise = summarizeMeeting({ transcript: mockTranscript });
-      const actionItemsPromise = extractActionItems({ transcript: mockTranscript });
+      const diarizationPromise = diarizeAudio({ transcript: textToProcess, knownSpeakers });
+      const summaryPromise = summarizeMeeting({ transcript: textToProcess });
+      const actionItemsPromise = extractActionItems({ transcript: textToProcess });
       
       const [diarizationResult, summaryResult, actionItemsResult] = await Promise.all([
           diarizationPromise,
@@ -131,9 +139,27 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   }, []);
 
 
+  const processAudio = useCallback((audioDataUri: string) => {
+    startTransition(async () => {
+      setAudioUrl(audioDataUri);
+      const transcriptionResult = await transcribeAudio({ audioDataUri });
+      if (transcriptionResult.transcript) {
+        setTranscript(transcriptionResult.transcript);
+        runAiFlows(transcriptionResult.transcript);
+      }
+    });
+  }, [runAiFlows]);
+
+
   useEffect(() => {
-    runAiFlows();
-  }, [resolvedParams.id, runAiFlows]);
+    const audioDataUri = sessionStorage.getItem(`meeting_audio_${resolvedParams.id}`);
+    if (audioDataUri) {
+      processAudio(audioDataUri);
+    } else {
+      // Fallback to mock data if no audio is in session storage
+      runAiFlows(mockTranscript);
+    }
+  }, [resolvedParams.id, processAudio, runAiFlows]);
 
   if (isPending && !rawDiarization) {
     return <Loading />;
@@ -141,7 +167,6 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
   const meetingTitle = "Project Phoenix - Q3 Planning";
   const meetingDate = "August 15, 2023";
-  const audioUrl = "https://storage.googleapis.com/genkit-public/sociology-lecture.mp3"; // Placeholder URL
 
   return (
     <div className="container mx-auto max-w-7xl p-4 md:p-8">
@@ -159,9 +184,9 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       <div className="grid md:grid-cols-3 gap-8 items-start">
         <div className="md:col-span-2 space-y-6">
           <TranscriptEditor 
-            transcript={displayDiarization?.diarizedTranscript || ''} 
+            transcript={displayDiarization.diarizedTranscript || ''} 
             audioUrl={audioUrl}
-            onRetranscribe={runAiFlows}
+            onRetranscribe={() => runAiFlows(transcript)}
             isProcessing={isPending}
           />
           <SummaryView summary={displaySummary} />
@@ -178,4 +203,3 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
