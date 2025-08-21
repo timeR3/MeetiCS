@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useTransition, use, useMemo, useCallback } from "react";
@@ -109,7 +110,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     }));
   }, [rawActionItems, replaceSpeakerNames]);
 
-  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== '' && !initialSpeakers.includes(name)), [participantNames, initialSpeakers]);
+  const displayParticipants = useMemo(() => Object.values(participantNames), [participantNames]);
 
   const runAiFlows = useCallback(() => {
     startTransition(async () => {
@@ -171,9 +172,10 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
             participantNames={participantNames}
             onNameChange={handleNameChange}
           />
-          <ActionItems items={displayActionItems} participants={[...initialSpeakers, ...displayParticipants]} />
+          <ActionItems items={displayActionItems} participants={displayParticipants} />
         </div>
       </div>
     </div>
   );
 }
+
