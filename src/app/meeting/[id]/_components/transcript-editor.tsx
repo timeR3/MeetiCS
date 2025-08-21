@@ -83,9 +83,11 @@ export default function TranscriptEditor({ transcript: initialTranscript, audioU
             </CardHeader>
             <CardContent>
                 <div className="p-2 bg-muted/50 rounded-lg mb-4 flex items-center gap-2">
-                    <audio controls src={audioUrl} className="w-full">
-                        Your browser does not support the audio element.
-                    </audio>
+                    {audioUrl && (
+                        <audio controls src={audioUrl} className="w-full">
+                            Your browser does not support the audio element.
+                        </audio>
+                    )}
                     <Button variant="outline" size="icon" onClick={onRetranscribe} disabled={isProcessing} aria-label={t('retranscribe')}>
                         {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
