@@ -75,7 +75,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       if (!text) return '';
       let updatedText = text;
       Object.entries(participantNames).forEach(([oldName, newName]) => {
-          if (oldName !== newName) {
+          if (oldName !== newName && newName) { // only replace if newName is not empty
               const regex = new RegExp(`\\b${oldName}\\b`, 'g');
               updatedText = updatedText.replace(regex, newName);
           }
@@ -93,10 +93,13 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
   const displaySummary = useMemo(() => {
     if (!rawSummary) return null;
-    // Note: This assumes summary text doesn't contain speaker names.
-    // If it does, it needs replacement too.
-    return rawSummary;
-  }, [rawSummary]);
+    return {
+      summary: replaceSpeakerNames(rawSummary.summary),
+      keyDiscussionPoints: replaceSpeakerNames(rawSummary.keyDiscussionPoints),
+      decisionsMade: replaceSpeakerNames(rawSummary.decisionsMade),
+      actionItems: replaceSpeakerNames(rawSummary.actionItems)
+    };
+  }, [rawSummary, replaceSpeakerNames]);
 
   const displayActionItems = useMemo(() => {
     if (!rawActionItems) return null;
@@ -106,7 +109,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     }));
   }, [rawActionItems, replaceSpeakerNames]);
 
-  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== ''), [participantNames]);
+  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== '' && !initialSpeakers.includes(name)), [participantNames, initialSpeakers]);
 
 
   useEffect(() => {
@@ -162,7 +165,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
             participantNames={participantNames}
             onNameChange={handleNameChange}
           />
-          <ActionItems items={displayActionItems} participants={displayParticipants} />
+          <ActionItems items={displayActionItems} participants={[...initialSpeakers, ...displayParticipants]} />
         </div>
       </div>
     </div>
