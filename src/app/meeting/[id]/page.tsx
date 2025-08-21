@@ -54,6 +54,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
   const meetingTitle = "Project Phoenix - Q3 Planning";
   const meetingDate = "August 15, 2023";
+  const audioUrl = "https://storage.googleapis.com/genkit-public/sociology-lecture.mp3"; // Placeholder URL
 
   return (
     <div className="container mx-auto max-w-7xl p-4 md:p-8">
@@ -69,12 +70,15 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 items-start">
-        <div className="md:col-span-2">
-          <TranscriptEditor initialTranscript={diarization?.diarizedTranscript || ''} />
+        <div className="md:col-span-2 space-y-6">
+          <TranscriptEditor 
+            initialTranscript={diarization?.diarizedTranscript || ''} 
+            audioUrl={audioUrl}
+          />
+          <SummaryView summary={summary} />
         </div>
         <div className="md:col-span-1 space-y-6 sticky top-24">
           <ParticipantManager transcript={diarization?.diarizedTranscript || ''} />
-          <SummaryView summary={summary} />
           <ActionItems items={actionItems} />
         </div>
       </div>
