@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Bot, Edit, Save, Music4 } from "lucide-react";
+import { Bot, Edit, Save, Music4, RefreshCw, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,8 @@ import { useLanguage } from "@/context/language-context";
 interface TranscriptEditorProps {
     transcript: string;
     audioUrl: string;
+    onRetranscribe: () => void;
+    isProcessing: boolean;
 }
 
 const getInitials = (name: string) => {
@@ -34,7 +36,7 @@ const parseTranscript = (transcript: string) => {
     });
 };
 
-export default function TranscriptEditor({ transcript: initialTranscript, audioUrl }: TranscriptEditorProps) {
+export default function TranscriptEditor({ transcript: initialTranscript, audioUrl, onRetranscribe, isProcessing }: TranscriptEditorProps) {
     const [transcript, setTranscript] = useState(initialTranscript);
     const [isEditing, setIsEditing] = useState(false);
     const { t } = useLanguage();
@@ -80,10 +82,13 @@ export default function TranscriptEditor({ transcript: initialTranscript, audioU
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="p-2 bg-muted/50 rounded-lg mb-4">
+                <div className="p-2 bg-muted/50 rounded-lg mb-4 flex items-center gap-2">
                     <audio controls src={audioUrl} className="w-full">
                         Your browser does not support the audio element.
                     </audio>
+                    <Button variant="outline" size="icon" onClick={onRetranscribe} disabled={isProcessing} aria-label={t('retranscribe')}>
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    </Button>
                 </div>
                 
                 <Separator className="my-4" />

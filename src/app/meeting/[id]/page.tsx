@@ -111,8 +111,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
   const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== '' && !initialSpeakers.includes(name)), [participantNames, initialSpeakers]);
 
-
-  useEffect(() => {
+  const runAiFlows = useCallback(() => {
     startTransition(async () => {
       const diarizationPromise = diarizeAudio({ transcript: mockTranscript, knownSpeakers });
       const summaryPromise = summarizeMeeting({ transcript: mockTranscript });
@@ -128,7 +127,12 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       setRawSummary(summaryResult);
       setRawActionItems(actionItemsResult);
     });
-  }, [resolvedParams.id]);
+  }, []);
+
+
+  useEffect(() => {
+    runAiFlows();
+  }, [resolvedParams.id, runAiFlows]);
 
   if (isPending && !rawDiarization) {
     return <Loading />;
@@ -156,6 +160,8 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
           <TranscriptEditor 
             transcript={displayDiarization?.diarizedTranscript || ''} 
             audioUrl={audioUrl}
+            onRetranscribe={runAiFlows}
+            isProcessing={isPending}
           />
           <SummaryView summary={displaySummary} />
         </div>

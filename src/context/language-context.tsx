@@ -49,7 +49,7 @@ const translations = {
         add_action_item: "Add Action Item",
         enter_action_item: "Enter action item description",
         enter_speaker_name: "Enter speaker's name",
-
+        retranscribe: "Retranscribe"
     },
     es: {
         your_meetings: "Tus Reuniones",
@@ -95,6 +95,7 @@ const translations = {
         add_action_item: "Añadir Tarea",
         enter_action_item: "Introduce la descripción de la tarea",
         enter_speaker_name: "Introduce el nombre del responsable",
+        retranscribe: "Volver a transcribir"
     }
 }
 
