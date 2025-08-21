@@ -33,8 +33,8 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
   const { t } = useLanguage();
 
-  const [audioUrl, setAudioUrl] = useState<string>("https://storage.googleapis.com/genkit-public/sociology-lecture.mp3"); // Placeholder URL
-  const [transcript, setTranscript] = useState<string>(mockTranscript);
+  const [audioUrl, setAudioUrl] = useState<string>(""); // Default to empty
+  const [transcript, setTranscript] = useState<string>("");
   
   // Raw AI results
   const [rawDiarization, setRawDiarization] = useState<DiarizeAudioOutput | null>(null);
@@ -118,10 +118,16 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     }));
   }, [rawActionItems, participantNames]);
   
-  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== ""), [participantNames]);
+  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name && name.trim() !== ""), [participantNames]);
 
   const runAiFlows = useCallback((textToProcess: string) => {
     startTransition(async () => {
+      // Clear previous results to avoid showing stale data
+      setRawDiarization(null);
+      setRawSummary(null);
+      setRawActionItems(null);
+      setParticipantNames({});
+
       const diarizationPromise = diarizeAudio({ transcript: textToProcess, knownSpeakers });
       const summaryPromise = summarizeMeeting({ transcript: textToProcess });
       const actionItemsPromise = extractActionItems({ transcript: textToProcess });
@@ -146,6 +152,9 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       if (transcriptionResult.transcript) {
         setTranscript(transcriptionResult.transcript);
         runAiFlows(transcriptionResult.transcript);
+      } else {
+        // Handle cases where transcription might fail
+        setTranscript("Could not transcribe the audio.");
       }
     });
   }, [runAiFlows]);
@@ -157,6 +166,8 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       processAudio(audioDataUri);
     } else {
       // Fallback to mock data if no audio is in session storage
+      setAudioUrl("https://storage.googleapis.com/genkit-public/sociology-lecture.mp3");
+      setTranscript(mockTranscript);
       runAiFlows(mockTranscript);
     }
   }, [resolvedParams.id, processAudio, runAiFlows]);
@@ -203,3 +214,5 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+
+    
