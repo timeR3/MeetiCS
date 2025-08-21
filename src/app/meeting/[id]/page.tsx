@@ -26,7 +26,12 @@ Speaker 2: Mainly offline access and push notifications. Charlie, you were looki
 Charlie: Yes, I've done a preliminary analysis. A native app would be a significant undertaking, but a PWA could be a good first step. It would give us offline capabilities quickly.
 Speaker 1: I like that idea. Let's create an action item for Charlie to scope out the PWA implementation plan. We'll need a full proposal by the end of the month. Speaker 2, please also put together a report on the most requested mobile features. We'll review both in two weeks.`;
 
-const knownSpeakers: {id: string, name: string}[] = [];
+// In a real app, this would come from your database.
+const knownSpeakers = [
+    { id: "user_1", name: "Alice", voice_profile_url: "/voices/alice.wav" },
+    { id: "user_2", name: "Bob", voice_profile_url: "/voices/bob.wav" },
+    { id: "user_charlie", name: "Charlie", voice_profile_url: "/voices/charlie.wav" }
+];
 
 
 export default function MeetingPage({ params }: { params: { id: string } }) {
@@ -72,6 +77,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
         return acc;
     }, {...participantNames} as Record<string, string>);
     setParticipantNames(initialMapping);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSpeakers]);
 
   const handleNameChange = useCallback((oldName: string, newName: string) => {

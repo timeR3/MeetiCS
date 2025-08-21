@@ -18,7 +18,7 @@ const DiarizeAudioInputSchema = z.object({
   knownSpeakers: z.array(z.object({
     id: z.string().describe("A unique identifier for the speaker."),
     name: z.string().describe("The name of the speaker."),
-    voice_profile_url: z.string().optional().describe("A URL to a voice sample for the speaker.")
+    voice_profile_url: z.string().optional().describe("A URL to a voice sample for the speaker to aid in identification.")
   })).optional().describe("An optional list of known speakers to help with identification.")
 });
 export type DiarizeAudioInput = z.infer<typeof DiarizeAudioInputSchema>;
@@ -38,16 +38,16 @@ const prompt = ai.definePrompt({
   name: 'diarizeAudioPrompt',
   input: {schema: DiarizeAudioInputSchema},
   output: {schema: DiarizeAudioOutputSchema},
-  prompt: `You are an AI expert in diarizing meeting transcripts. Your task is to analyze the text and accurately tag different speakers. Be conservative in identifying new speakers; only create a new speaker if you are confident it's a different person.
+  prompt: `You are an AI expert in diarizing meeting transcripts. Your task is to analyze the text and accurately tag different speakers. Be very conservative in identifying new speakers; only create a new speaker if you are absolutely confident it's a different person. If there is any ambiguity, assume it is the same speaker.
 
 {{#if knownSpeakers}}
-You have been provided with a list of known speakers. Where possible, use these names instead of generic labels like "Speaker 1".
+You have been provided with a list of known speakers. Use their provided names (e.g., "Alice", "Bob") to identify who is speaking in the transcript. Your primary task is to map the generic "Speaker 1", "Speaker 2", etc., to these known names.
 Known Speakers:
 {{#each knownSpeakers}}
 - {{this.name}}
 {{/each}}
 {{else}}
-Use generic labels like "Speaker 1:", "Speaker 2:", etc. Use as few speakers as necessary to properly diarize the transcript. If the speaker is unclear or seems to be the same person, use the most likely existing speaker tag.
+Use generic labels like "Speaker 1:", "Speaker 2:", etc. Use as few speakers as necessary to properly diarize the transcript.
 {{/if}}
 
 If a speaker changes mid-sentence, create a new speaker tag on the new line. Return the diarized transcript.
