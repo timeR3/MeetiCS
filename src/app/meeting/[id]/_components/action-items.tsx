@@ -7,6 +7,7 @@ import type { ExtractActionItemsOutput } from "@/ai/flows/extract-action-items";
 import { Bot, CheckSquare, Mail, User, Edit, Save, Trash2, PlusCircle } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ActionItemsProps {
     items: ExtractActionItemsOutput | null;
