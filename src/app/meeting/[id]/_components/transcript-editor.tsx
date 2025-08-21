@@ -11,11 +11,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/context/language-context";
 
 interface TranscriptEditorProps {
-    initialTranscript: string;
+    transcript: string;
     audioUrl: string;
 }
 
 const getInitials = (name: string) => {
+    if (!name) return "?";
     const parts = name.split(' ');
     if (parts.length > 1 && parts[0] && parts[1]) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -33,29 +34,50 @@ const parseTranscript = (transcript: string) => {
     });
 };
 
-
-export default function TranscriptEditor({ initialTranscript, audioUrl }: TranscriptEditorProps) {
+export default function TranscriptEditor({ transcript: initialTranscript, audioUrl }: TranscriptEditorProps) {
     const [transcript, setTranscript] = useState(initialTranscript);
     const [isEditing, setIsEditing] = useState(false);
     const { t } = useLanguage();
     
+    // Update internal state if the prop changes (e.g., from parent)
+    useState(() => {
+        setTranscript(initialTranscript);
+    });
+
     const parsedTranscript = parseTranscript(transcript);
+
+    const handleSave = () => {
+        setIsEditing(false);
+        // In a real app, you would probably want to notify the parent
+        // that the transcript has been manually edited.
+        console.log("Saving manual transcript edits:", transcript);
+    };
+    
+    const handleCancel = () => {
+        setIsEditing(false);
+        setTranscript(initialTranscript); // Revert to original prop
+    };
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center"><Music4 className="mr-2 h-5 w-5" /> {t('transcript')}</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
+                <div>
                     {isEditing ? (
-                        <>
-                            <Save className="mr-2 h-4 w-4" /> {t('save')}
-                        </>
+                        <div className="flex gap-2">
+                             <Button variant="ghost" size="sm" onClick={handleCancel}>
+                                {t('cancel')}
+                             </Button>
+                             <Button variant="default" size="sm" onClick={handleSave}>
+                                <Save className="mr-2 h-4 w-4" /> {t('save')}
+                             </Button>
+                        </div>
                     ) : (
-                        <>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
                             <Edit className="mr-2 h-4 w-4" /> {t('edit')}
-                        </>
+                        </Button>
                     )}
-                </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="p-2 bg-muted/50 rounded-lg mb-4">

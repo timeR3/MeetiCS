@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, use, useMemo } from "react";
+import { useEffect, useState, useTransition, use, useMemo, useCallback } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,32 +17,97 @@ import { extractActionItems } from "@/ai/flows/extract-action-items";
 import Loading from "./loading";
 import { useLanguage } from "@/context/language-context";
 
-const mockTranscript = `Alice: Okay team, let's kick off the Q3 planning for Project Phoenix. Bob, can you start with the latest user feedback? Bob: Sure Alice. We've seen a 20% increase in feature requests for a mobile app. Users are loving the web version but want portability. Alice: Interesting. That aligns with our long-term goals. What are the key themes from the requests? Bob: Mainly offline access and push notifications. Charlie, you were looking into the technical feasibility of this, right? Charlie: Yes, I've done a preliminary analysis. A native app would be a significant undertaking, but a PWA could be a good first step. It would give us offline capabilities quickly. Alice: I like that idea. Let's create an action item for Charlie to scope out the PWA implementation plan. We'll need a full proposal by the end of the month. Bob, please also put together a report on the most requested mobile features. We'll review both in two weeks.`;
+const mockTranscript = `Speaker 1: Okay team, let's kick off the Q3 planning for Project Phoenix. Speaker 2, can you start with the latest user feedback?
+Speaker 2: Sure Speaker 1. We've seen a 20% increase in feature requests for a mobile app. Users are loving the web version but want portability.
+Speaker 1: Interesting. That aligns with our long-term goals. What are the key themes from the requests?
+Speaker 2: Mainly offline access and push notifications. Charlie, you were looking into the technical feasibility of this, right?
+Charlie: Yes, I've done a preliminary analysis. A native app would be a significant undertaking, but a PWA could be a good first step. It would give us offline capabilities quickly.
+Speaker 1: I like that idea. Let's create an action item for Charlie to scope out the PWA implementation plan. We'll need a full proposal by the end of the month. Speaker 2, please also put together a report on the most requested mobile features. We'll review both in two weeks.`;
 
-const knownSpeakers = [
-    { id: '1', name: 'Alice', voice_profile_url: '' },
-    { id: '2', name: 'Bob', voice_profile_url: '' },
-];
+const knownSpeakers: {id: string, name: string}[] = [];
+
 
 export default function MeetingPage({ params }: { params: { id: string } }) {
   const resolvedParams = use(params);
   const { t } = useLanguage();
-  const [diarization, setDiarization] = useState<DiarizeAudioOutput | null>(null);
-  const [summary, setSummary] = useState<SummarizeMeetingOutput | null>(null);
-  const [actionItems, setActionItems] = useState<ExtractActionItemsOutput | null>(null);
-  const [isPending, startTransition] = useTransition();
 
-  const speakers = useMemo(() => {
-    if (!diarization?.diarizedTranscript) return [];
+  // Raw AI results
+  const [rawDiarization, setRawDiarization] = useState<DiarizeAudioOutput | null>(null);
+  const [rawSummary, setRawSummary] = useState<SummarizeMeetingOutput | null>(null);
+  const [rawActionItems, setRawActionItems] = useState<ExtractActionItemsOutput | null>(null);
+  
+  // State for participant name mapping
+  const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
+  
+  const [isPending, startTransition] = useTransition();
+  
+  // Memoized initial speakers from the first diarization
+  const initialSpeakers = useMemo(() => {
+    if (!rawDiarization?.diarizedTranscript) return [];
     const speakerSet = new Set<string>();
-    diarization.diarizedTranscript.split('\n').forEach(line => {
-        const match = line.match(/^(.*?):/);
-        if (match && match[1]) {
-            speakerSet.add(match[1].trim());
-        }
+    rawDiarization.diarizedTranscript.split('\n').forEach(line => {
+      const match = line.match(/^(.*?):/);
+      if (match && match[1]) {
+        speakerSet.add(match[1].trim());
+      }
     });
     return Array.from(speakerSet);
-  }, [diarization?.diarizedTranscript]);
+  }, [rawDiarization?.diarizedTranscript]);
+
+  // Update participantNames state when initialSpeakers are identified
+  useEffect(() => {
+    const initialMapping = initialSpeakers.reduce((acc, speaker) => {
+        acc[speaker] = speaker; // Initially, the displayed name is the speaker ID
+        return acc;
+    }, {} as Record<string, string>);
+    setParticipantNames(initialMapping);
+  }, [initialSpeakers]);
+
+  const handleNameChange = useCallback((oldName: string, newName: string) => {
+    setParticipantNames(prev => ({
+      ...prev,
+      [oldName]: newName,
+    }));
+  }, []);
+  
+  // Function to replace speaker names in a given text
+  const replaceSpeakerNames = useCallback((text: string | undefined) => {
+      if (!text) return '';
+      let updatedText = text;
+      Object.entries(participantNames).forEach(([oldName, newName]) => {
+          if (oldName !== newName) {
+              const regex = new RegExp(`\\b${oldName}\\b`, 'g');
+              updatedText = updatedText.replace(regex, newName);
+          }
+      });
+      return updatedText;
+  }, [participantNames]);
+
+  // Memoized derived state for UI components
+  const displayDiarization = useMemo(() => {
+    if (!rawDiarization) return null;
+    return {
+      diarizedTranscript: replaceSpeakerNames(rawDiarization.diarizedTranscript)
+    };
+  }, [rawDiarization, replaceSpeakerNames]);
+
+  const displaySummary = useMemo(() => {
+    if (!rawSummary) return null;
+    // Note: This assumes summary text doesn't contain speaker names.
+    // If it does, it needs replacement too.
+    return rawSummary;
+  }, [rawSummary]);
+
+  const displayActionItems = useMemo(() => {
+    if (!rawActionItems) return null;
+    return rawActionItems.map(item => ({
+      ...item,
+      speaker: replaceSpeakerNames(item.speaker)
+    }));
+  }, [rawActionItems, replaceSpeakerNames]);
+
+  const displayParticipants = useMemo(() => Object.values(participantNames).filter(name => name.trim() !== ''), [participantNames]);
+
 
   useEffect(() => {
     startTransition(async () => {
@@ -56,13 +121,13 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
           actionItemsPromise
       ]);
 
-      setDiarization(diarizationResult);
-      setSummary(summaryResult);
-      setActionItems(actionItemsResult);
+      setRawDiarization(diarizationResult);
+      setRawSummary(summaryResult);
+      setRawActionItems(actionItemsResult);
     });
   }, [resolvedParams.id]);
 
-  if (isPending) {
+  if (isPending && !rawDiarization) {
     return <Loading />;
   }
 
@@ -86,14 +151,18 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       <div className="grid md:grid-cols-3 gap-8 items-start">
         <div className="md:col-span-2 space-y-6">
           <TranscriptEditor 
-            initialTranscript={diarization?.diarizedTranscript || ''} 
+            transcript={displayDiarization?.diarizedTranscript || ''} 
             audioUrl={audioUrl}
           />
-          <SummaryView summary={summary} />
+          <SummaryView summary={displaySummary} />
         </div>
         <div className="md:col-span-1 space-y-6 sticky top-24">
-          <ParticipantManager speakers={speakers} />
-          <ActionItems items={actionItems} participants={speakers} />
+          <ParticipantManager
+            speakers={initialSpeakers}
+            participantNames={participantNames}
+            onNameChange={handleNameChange}
+          />
+          <ActionItems items={displayActionItems} participants={displayParticipants} />
         </div>
       </div>
     </div>

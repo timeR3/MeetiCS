@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +8,13 @@ import { Save, Users, Bot } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 
 interface ParticipantManagerProps {
-    speakers: string[];
+    speakers: string[]; // e.g., ["Speaker 1", "Speaker 2"]
+    participantNames: Record<string, string>; // e.g., { "Speaker 1": "Alice", "Speaker 2": "Bob" }
+    onNameChange: (speaker: string, name: string) => void;
 }
 
 const getInitials = (name: string) => {
+    if (!name) return "?";
     const parts = name.split(' ');
     if (parts.length > 1 && parts[0] && parts[1]) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -20,15 +22,8 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 }
 
-export default function ParticipantManager({ speakers }: ParticipantManagerProps) {
+export default function ParticipantManager({ speakers, participantNames, onNameChange }: ParticipantManagerProps) {
     const { t } = useLanguage();
-    const [participantNames, setParticipantNames] = useState<Record<string, string>>(
-        speakers.reduce((acc, speaker) => ({ ...acc, [speaker]: "" }), {})
-    );
-
-    const handleNameChange = (speaker: string, name: string) => {
-        setParticipantNames(prev => ({ ...prev, [speaker]: name }));
-    };
 
     const handleSave = () => {
         // In a real app, you'd save this to a database
@@ -49,18 +44,18 @@ export default function ParticipantManager({ speakers }: ParticipantManagerProps
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
-                    {speakers.map(speaker => (
-                        <div key={speaker} className="flex items-center gap-3">
+                    {speakers.map(speakerId => (
+                        <div key={speakerId} className="flex items-center gap-3">
                             <Avatar>
-                                <AvatarFallback>{getInitials(participantNames[speaker] || speaker)}</AvatarFallback>
+                                <AvatarFallback>{getInitials(participantNames[speakerId] || speakerId)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-primary">{speaker}</p>
+                                <p className="text-sm font-medium text-primary">{speakerId}</p>
                                 <Input
                                     type="text"
                                     placeholder={t('enter_participant_name')}
-                                    value={participantNames[speaker] || ""}
-                                    onChange={(e) => handleNameChange(speaker, e.target.value)}
+                                    value={participantNames[speakerId] || ""}
+                                    onChange={(e) => onNameChange(speakerId, e.target.value)}
                                     className="h-8 mt-1"
                                 />
                             </div>
